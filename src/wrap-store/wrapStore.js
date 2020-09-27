@@ -94,16 +94,17 @@ export default (store, {
   * Setup for state updates
   */
   const connectState = async (port) => {
+    const createdStore = await store();
     if (port.name !== portName) {
       return;
     }
 
     const serializedMessagePoster = withSerializer(serializer)((...args) => port.postMessage(...args));
 
-    let prevState = (await store()).getState();
+    let prevState = createdStore.getState();
 
     const patchState = () => {
-      const state = (await store()).getState();
+      const state = createdStore.getState();
       const diff = diffStrategy(prevState, state);
 
       if (diff.length) {
