@@ -70,7 +70,7 @@ export default (store, {
   /**
    * Respond to dispatches from UI components
    */
-  const dispatchResponse = (request, sender, sendResponse) => {
+  const dispatchResponse = async (request, sender, sendResponse) => {
     if (request.type === DISPATCH_TYPE && request.portName === portName) {
       const action = Object.assign({}, request.payload, {
         _sender: sender
@@ -79,7 +79,7 @@ export default (store, {
       let dispatchResult = null;
 
       try {
-        dispatchResult = store.dispatch(action);
+        dispatchResult = (await store()).dispatch(action);
       } catch (e) {
         dispatchResult = Promise.reject(e.message);
         console.error(e);
@@ -93,17 +93,17 @@ export default (store, {
   /**
   * Setup for state updates
   */
-  const connectState = (port) => {
+  const connectState = async (port) => {
     if (port.name !== portName) {
       return;
     }
 
     const serializedMessagePoster = withSerializer(serializer)((...args) => port.postMessage(...args));
 
-    let prevState = store.getState();
+    let prevState = (await store()).getState();
 
     const patchState = () => {
-      const state = store.getState();
+      const state = (await store()).getState();
       const diff = diffStrategy(prevState, state);
 
       if (diff.length) {
@@ -117,7 +117,7 @@ export default (store, {
     };
 
     // Send patched state down connected port on every redux store state change
-    const unsubscribe = store.subscribe(patchState);
+    const unsubscribe = (await store()).subscribe(patchState);
 
     // when the port disconnects, unsubscribe the sendState listener
     port.onDisconnect.addListener(unsubscribe);
