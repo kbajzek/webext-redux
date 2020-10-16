@@ -927,7 +927,7 @@ function getBrowserAPI() {
   return api;
 }
 
-var backgroundErrPrefix = '\nLooks like there is an error in the background page. ' + 'You might want to inspect your background page for more details.\n';
+var backgroundErrPrefix = "\nLooks like there is an error in the background page. " + "You might want to inspect your background page for more details.\n";
 var defaultOpts = {
   portName: DEFAULT_PORT_NAME,
   state: {},
@@ -959,24 +959,25 @@ function () {
         _ref$deserializer = _ref.deserializer,
         deserializer = _ref$deserializer === void 0 ? defaultOpts.deserializer : _ref$deserializer,
         _ref$patchStrategy = _ref.patchStrategy,
-        patchStrategy = _ref$patchStrategy === void 0 ? defaultOpts.patchStrategy : _ref$patchStrategy;
+        patchStrategy = _ref$patchStrategy === void 0 ? defaultOpts.patchStrategy : _ref$patchStrategy,
+        store = _ref.store;
 
     _classCallCheck(this, Store);
 
     if (!portName) {
-      throw new Error('portName is required in options');
+      throw new Error("portName is required in options");
     }
 
-    if (typeof serializer !== 'function') {
-      throw new Error('serializer must be a function');
+    if (typeof serializer !== "function") {
+      throw new Error("serializer must be a function");
     }
 
-    if (typeof deserializer !== 'function') {
-      throw new Error('deserializer must be a function');
+    if (typeof deserializer !== "function") {
+      throw new Error("deserializer must be a function");
     }
 
-    if (typeof patchStrategy !== 'function') {
-      throw new Error('patchStrategy must be one of the included patching strategies or a custom patching function');
+    if (typeof patchStrategy !== "function") {
+      throw new Error("patchStrategy must be one of the included patching strategies or a custom patching function");
     }
 
     this.portName = portName;
@@ -1008,7 +1009,12 @@ function () {
     }, 1);
     this.listeners = [];
     this.state = state;
-    this.patchStrategy = patchStrategy; // Don't use shouldDeserialize here, since no one else should be using this port
+    this.patchStrategy = patchStrategy;
+
+    if (store) {
+      this.store = store;
+    } // Don't use shouldDeserialize here, since no one else should be using this port
+
 
     this.serializedPortListener(function (message) {
       switch (message.type) {
@@ -1035,10 +1041,10 @@ function () {
     this.dispatch = this.dispatch.bind(this); // add this context to dispatch
   }
   /**
-  * Returns a promise that resolves when the store is ready. Optionally a callback may be passed in instead.
-  * @param [function] callback An optional callback that may be passed in and will fire when the store is ready.
-  * @return {object} promise A promise that resolves when the store has established a connection with the background page.
-  */
+   * Returns a promise that resolves when the store is ready. Optionally a callback may be passed in instead.
+   * @param [function] callback An optional callback that may be passed in and will fire when the store is ready.
+   * @return {object} promise A promise that resolves when the store has established a connection with the background page.
+   */
 
 
   _createClass(Store, [{
@@ -1063,6 +1069,10 @@ function () {
     value: function subscribe(listener) {
       var _this2 = this;
 
+      if (this.store) {
+        return this.store.subscribe(listener);
+      }
+
       this.listeners.push(listener);
       return function () {
         _this2.listeners = _this2.listeners.filter(function (l) {
@@ -1078,6 +1088,10 @@ function () {
   }, {
     key: "patchState",
     value: function patchState(difference) {
+      if (this.store) {
+        return;
+      }
+
       this.state = this.patchStrategy(this.state, difference);
       this.listeners.forEach(function (l) {
         return l();
@@ -1091,6 +1105,10 @@ function () {
   }, {
     key: "replaceState",
     value: function replaceState(state) {
+      if (this.store) {
+        return;
+      }
+
       this.state = state;
       this.listeners.forEach(function (l) {
         return l();
@@ -1104,6 +1122,10 @@ function () {
   }, {
     key: "getState",
     value: function getState() {
+      if (this.store) {
+        return this.store.state;
+      }
+
       return this.state;
     }
     /**
@@ -1147,7 +1169,7 @@ function () {
   }, {
     key: "safetyHandler",
     value: function safetyHandler(message) {
-      if (message.action === 'storeReady' && message.portName === this.portName) {
+      if (message.action === "storeReady" && message.portName === this.portName) {
         // Remove Saftey Listener
         this.browserAPI.runtime.onMessage.removeListener(this.safetyHandler); // Resolve if readyPromise has not been resolved.
 
